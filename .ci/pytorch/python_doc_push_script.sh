@@ -102,8 +102,9 @@ if [ "$is_main_doc" = true ]; then
     echo "Coverage output not found"
     exit 1
   elif [ $undocumented -gt 0 ]; then
-    objects=$(cat build/coverage/python.txt | tr '\n' ', ')
-    echo "Undocumented objects found: ${objects}"
+    md5=$(md5sum build/coverage/python.txt)
+    echo "Undocumented objects found (${md5}):"
+    cat build/coverage/python.txt
     echo "Make sure you've updated relevant .rsts in docs/source!"
     exit 1
   fi
