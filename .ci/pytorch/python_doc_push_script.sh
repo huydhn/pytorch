@@ -99,11 +99,11 @@ if [ "$is_main_doc" = true ]; then
   lines=$(wc -l build/coverage/python.txt 2>/dev/null |cut -f1 -d' ')
   undocumented=$((lines - 2))
   if [ $undocumented -lt 0 ]; then
-    echo coverage output not found
+    echo "Coverage output not found"
     exit 1
   elif [ $undocumented -gt 0 ]; then
-    echo undocumented objects found:
-    cat build/coverage/python.txt
+    objects=$(cat build/coverage/python.txt | tr '\n' ', ')
+    echo "Undocumented objects found: ${objects}"
     echo "Make sure you've updated relevant .rsts in docs/source!"
     exit 1
   fi
