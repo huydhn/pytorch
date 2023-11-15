@@ -1,33 +1,17 @@
-import contextlib
-import os
-import pathlib
-import time
+import torch
+import re
+import unittest
 from subprocess import CalledProcessError
 
-from torch.testing._internal.common_utils import (
-    TestCase as TorchTestCase,
-)
 from torch._inductor.codecache import CppCodeCache
 from torch.utils._triton import has_triton
 from torch.testing._internal.common_utils import (
     LazyVal,
     IS_FBCODE,
-    IS_MACOS,
-    IS_X86,
 )
 from torch._dynamo.backends.registry import register_backend
 from torch._inductor.compile_fx import compile_fx, count_bytes_inner
 from torch.testing._internal.common_utils import TestCase
-import torch
-import re
-import functools
-import unittest
-import dataclasses
-import copy
-from torch.utils import _pytree as pytree
-from torch.utils._pytree import tree_flatten, tree_unflatten
-from typing import Tuple
-from torch._dynamo.testing import make_test_cls_with_patches
 
 def test_cpu():
     try:
