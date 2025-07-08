@@ -3468,6 +3468,10 @@ class TestIndividualWorkerQueue(TestCase):
             if current_worker_idx == num_workers:
                 current_worker_idx = 0
 
+    @unittest.skipIf(
+        IS_WINDOWS,
+        "Flaky on Windows https://github.com/pytorch/pytorch/issues/68643",
+    )
     def test_ind_worker_queue(self):
         max_num_workers = None
         if hasattr(os, "sched_getaffinity"):
