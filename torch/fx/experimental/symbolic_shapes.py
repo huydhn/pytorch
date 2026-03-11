@@ -42,10 +42,12 @@ from typing import (
     Generic,
     NamedTuple,
     NoReturn,
+    Optional,
     TYPE_CHECKING,
     TypeAlias,
     TypeGuard,
     TypeVar,
+    Union,
 )
 from typing_extensions import deprecated, ParamSpec
 
