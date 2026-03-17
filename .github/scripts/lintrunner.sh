@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -ex
 
+# Install spin if not already available
+if ! command -v spin &> /dev/null; then
+    pip install spin==0.17
+fi
+
 CACHE_DIRECTORY="/tmp/.lintbin"
 # Try to recover the cached binaries
 if [[ -d "${CACHE_DIRECTORY}" ]]; then
