@@ -58,7 +58,8 @@ jobs:
       )
     with:
       runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cuda-x86_64-3954e68
+      # docker-image: ghcr.io/pytorch/test-infra:cuda-x86_64-3954e68
+      docker-image: nvidia/cuda:13.2.0-runtime-ubuntu22.04  # DEBUG
       script: |
         CHANGED_FILES="${{ needs.get-changed-files.outputs.changed-files }}"
         if [ "$CHANGED_FILES" = "*" ]; then
