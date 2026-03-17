@@ -97,8 +97,7 @@ jobs:
     needs: get-changed-files
     with:
       runner: l-x86iamx-8-16
-      # docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
-      docker-image: nvidia/cuda:13.2.0-runtime-ubuntu22.04  # DEBUG
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
       script: |
         CHANGED_FILES="${{ needs.get-changed-files.outputs.changed-files }}"
         echo "Running all other linters"
@@ -112,8 +111,7 @@ jobs:
     uses: ./.github/workflows/_lint.yml
     with:
       runner: l-x86iamx-8-16
-      # docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
-      docker-image: ghcr.io/actions/actions-runner:latest  # DEBUG
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
       script: |
         # Ensure no non-breaking spaces
         # NB: We use 'printf' below rather than '\u000a' since bash pre-4.2
