@@ -33,21 +33,20 @@ jobs:
     name: lintrunner-clang-${{ needs.get-changed-files.outputs.changed-files == '*' && 'all' || 'partial' }}
     needs: get-changed-files
     # Only run if there are changed files relevant to clangtidy / clangformat
-    # DEBUG
-    # if: |
-    #   github.repository_owner == 'pytorch' && (
-    #     needs.get-changed-files.outputs.changed-files == '*' ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.h') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.cpp') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.cc') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.cxx') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.hpp') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.hxx') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.cu') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.cuh') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.mm') ||
-    #     contains(needs.get-changed-files.outputs.changed-files, '.metal')
-    #   )
+    if: |
+      github.repository_owner == 'pytorch' && (
+        needs.get-changed-files.outputs.changed-files == '*' ||
+        contains(needs.get-changed-files.outputs.changed-files, '.h') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.cpp') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.cc') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.cxx') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.hpp') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.hxx') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.cu') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.cuh') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.mm') ||
+        contains(needs.get-changed-files.outputs.changed-files, '.metal')
+      )
     with:
       runner: l-x86iamx-8-16
       docker-image: ghcr.io/pytorch/test-infra:cuda-x86_64-3954e68
