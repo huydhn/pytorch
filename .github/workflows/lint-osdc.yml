@@ -100,6 +100,7 @@ jobs:
         fi
 
   quick-checks:
+    if: github.repository_owner == 'pytorch'
     uses: ./.github/workflows/_lint.yml
     with:
       runner: l-x86iamx-8-16
@@ -132,7 +133,7 @@ jobs:
     name: pr-sanity-checks
     runs-on: linux.24_04.4x
     # Only run this on pull requests. This check is simple enough to be done without a Docker image
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip-pr-sanity-checks')
+    if: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip-pr-sanity-checks') && github.repository_owner == 'pytorch' }}
     steps:
       - name: Checkout PyTorch
         uses: pytorch/pytorch/.github/actions/checkout-pytorch@main
@@ -148,6 +149,7 @@ jobs:
           bash .github/scripts/pr-sanity-check.sh
 
   workflow-checks:
+    if: github.repository_owner == 'pytorch'
     uses: ./.github/workflows/_lint.yml
     with:
       runner: l-x86iamx-8-16
@@ -177,6 +179,7 @@ jobs:
         exit $RC
 
   toc:
+    if: github.repository_owner == 'pytorch'
     uses: ./.github/workflows/_lint.yml
     with:
       runner: l-x86iamx-8-16
@@ -307,6 +310,7 @@ jobs:
           python3 torch/utils/collect_env.py
 
   link-check:
+    if: github.repository_owner == 'pytorch'
     name: Link checks
     uses: ./.github/workflows/_link_check_osdc.yml
     with:
