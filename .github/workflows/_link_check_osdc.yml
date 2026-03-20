@@ -13,7 +13,7 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'skip-url-lint') }}
     uses: ./.github/workflows/_lint.yml
     with:
-      runner: ${{ inputs.runner }}mt-l-x86iamx-8-16
+      runner: mt-l-x86iamx-8-16
       docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         ./scripts/lint_urls.sh $(
@@ -34,7 +34,7 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'skip-xref-lint') }}
     uses: ./.github/workflows/_lint.yml
     with:
-      runner: ${{ inputs.runner }}mt-l-x86iamx-8-16
+      runner: mt-l-x86iamx-8-16
       docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         ./scripts/lint_xrefs.sh $(
