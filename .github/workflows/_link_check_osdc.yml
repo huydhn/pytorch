@@ -1,6 +1,9 @@
 on:
   workflow_call:
     inputs:
+      runner:
+        type: string
+        required: true
       ref:
         type: string
         required: true
@@ -10,8 +13,8 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'skip-url-lint') }}
     uses: ./.github/workflows/_lint.yml
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
+      runner: ${{ inputs.runner }}mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         ./scripts/lint_urls.sh $(
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -31,8 +34,8 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'skip-xref-lint') }}
     uses: ./.github/workflows/_lint.yml
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
+      runner: ${{ inputs.runner }}mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         ./scripts/lint_xrefs.sh $(
           if [ "${{ github.event_name }}" = "pull_request" ]; then

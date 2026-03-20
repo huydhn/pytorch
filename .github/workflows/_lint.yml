@@ -53,11 +53,7 @@ jobs:
         run: |
           set -eux
           # Update repository
-          dnf update -y
-
-          # Install tools
-          dnf groupinstall "Development Tools" -y
-          dnf install -y clang doxygen git graphviz nodejs npm
+          dnf install -y doxygen graphviz nodejs npm
 
       - name: Install Node.js packages
         shell: bash

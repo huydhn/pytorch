@@ -1,4 +1,4 @@
-name: Lint (unstable)
+name: Lint OSDC (unstable)
 # Unstable version of the lint workflow running on k8s ARC runners.
 # Runs in parallel with the existing lint workflow during rollout.
 
@@ -20,6 +20,15 @@ permissions: read-all
 # The names of steps that actually test the code should be suffixed with `(nonretryable)`.
 # When any other step fails, it's job will be retried once by retryBot.
 jobs:
+  get-label-type:
+    if: github.repository_owner == 'pytorch'
+    name: get-label-type
+    uses: pytorch/pytorch/.github/workflows/_runner-determinator.yml@main
+    with:
+      triggering_actor: ${{ github.triggering_actor }}
+      issue_owner: ${{ github.event.pull_request.user.login || github.event.issue.user.login }}
+      curr_branch: ${{ github.head_ref || github.ref_name }}
+
   get-changed-files:
     if: github.repository_owner == 'pytorch'
     name: Get changed files
@@ -31,7 +40,7 @@ jobs:
     uses: ./.github/workflows/_lint.yml
     # Needed to prevent deduping on HUD
     name: lintrunner-clang-${{ needs.get-changed-files.outputs.changed-files == '*' && 'all' || 'partial' }}
-    needs: get-changed-files
+    needs: [get-label-type, get-changed-files]
     # Only run if there are changed files relevant to clangtidy / clangformat
     if: |
       github.repository_owner == 'pytorch' && (
@@ -48,8 +57,8 @@ jobs:
         contains(needs.get-changed-files.outputs.changed-files, '.metal')
       )
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cuda-x86_64-3954e68
+      runner: mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cuda-x86_64-67eb930
       script: |
         CHANGED_FILES="${{ needs.get-changed-files.outputs.changed-files }}"
         if [ "$CHANGED_FILES" = "*" ]; then
@@ -66,7 +75,7 @@ jobs:
   lintrunner-pyrefly:
     uses: ./.github/workflows/_lint.yml
     name: lintrunner-pyrefly-${{ needs.get-changed-files.outputs.changed-files == '*' && 'all' || 'partial' }}
-    needs: get-changed-files
+    needs: [get-label-type, get-changed-files]
     # Only run if there are changed files relevant to pyrefly
     if: |
       github.repository_owner == 'pytorch' && (
@@ -75,8 +84,8 @@ jobs:
         contains(needs.get-changed-files.outputs.changed-files, '.pyi')
       )
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
+      runner: mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         CHANGED_FILES="${{ needs.get-changed-files.outputs.changed-files }}"
         echo "Running pyrefly"
@@ -85,10 +94,10 @@ jobs:
   lintrunner-noclang:
     uses: ./.github/workflows/_lint.yml
     name: lintrunner-noclang-${{ needs.get-changed-files.outputs.changed-files == '*' && 'all' || 'partial' }}
-    needs: get-changed-files
+    needs: [get-label-type, get-changed-files]
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
+      runner: mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         CHANGED_FILES="${{ needs.get-changed-files.outputs.changed-files }}"
         echo "Running all other linters"
@@ -100,10 +109,11 @@ jobs:
 
   quick-checks:
     if: github.repository_owner == 'pytorch'
+    needs: get-label-type
     uses: ./.github/workflows/_lint.yml
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
+      runner: mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         # Ensure no non-breaking spaces
         # NB: We use 'printf' below rather than '\u000a' since bash pre-4.2
@@ -149,10 +159,11 @@ jobs:
 
   workflow-checks:
     if: github.repository_owner == 'pytorch'
+    needs: get-label-type
     uses: ./.github/workflows/_lint.yml
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
+      runner: mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         # Regenerate workflows
         .github/scripts/generate_ci_workflows.py
@@ -179,10 +190,11 @@ jobs:
 
   toc:
     if: github.repository_owner == 'pytorch'
+    needs: get-label-type
     uses: ./.github/workflows/_lint.yml
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
+      runner: mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         # Regenerate ToCs and check that they didn't change
         set -eu
@@ -211,10 +223,11 @@ jobs:
   test-tools:
     name: Test tools
     if: ${{ github.repository == 'pytorch/pytorch' }}
+    needs: get-label-type
     uses: ./.github/workflows/_lint.yml
     with:
-      runner: l-x86iamx-8-16
-      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-3954e68
+      runner: mt-l-x86iamx-8-16
+      docker-image: ghcr.io/pytorch/test-infra:cpu-x86_64-67eb930
       script: |
         # Test tools
         PYTHONPATH=$(pwd) pytest tools/stats
@@ -310,9 +323,11 @@ jobs:
 
   link-check:
     if: github.repository_owner == 'pytorch'
+    needs: get-label-type
     name: Link checks
     uses: ./.github/workflows/_link_check_osdc.yml
     with:
+      runner: ${{ needs.get-label-type.outputs.label-type }}
       ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
   doc-redirects-check:
