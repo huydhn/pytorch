@@ -7,8 +7,16 @@ inputs:
     description: Whether the runner is an OSDC ARC runner (returned by runner_determinator)
     required: false
     default: ''
-  build-environment:
-    description: Top-level label for what's being built/tested (used to parse Python and GCC versions on ARC runners)
+  python-version:
+    description: Python version to install (e.g. "3.12"). Empty string keeps the default.
+    required: false
+    default: ''
+  compiler:
+    description: Compiler name and version (e.g. "gcc11", "clang15"). Empty string keeps the base image default.
+    required: false
+    default: ''
+  cuda-version:
+    description: CUDA version to activate (e.g. "13.0"). Empty string keeps the default.
     required: false
     default: ''
 
@@ -112,19 +120,11 @@ runs:
         exit 1
 
     # ── ARC-only steps ──────────────────────────────────────────────────
-    - name: Parse Python version from build environment
-      if: ${{ inputs.use-arc == 'true' }}
-      id: parse-python
-      shell: bash
-      run: |
-        PYTHON_VERSION=$(echo "${{ inputs.build-environment }}" | perl -n -e'/py(\d+\.\d+)/ && print $1')
-        echo "python-version=${PYTHON_VERSION:-3.12}" >> "${GITHUB_OUTPUT}"
-
     - name: Install uv (ARC)
       if: ${{ inputs.use-arc == 'true' }}
       uses: pytorch/test-infra/.github/actions/setup-uv@main
       with:
-        python-version: ${{ steps.parse-python.outputs.python-version }}
+        python-version: ${{ inputs.python-version || '3.12' }}
         activate-environment: true
 
     - name: Install CI requirements
@@ -135,17 +135,18 @@ runs:
         echo "CMAKE_PREFIX_PATH=${VIRTUAL_ENV}" >> "${GITHUB_ENV}"
 
     - name: Install C++ compiler
-      if: ${{ inputs.use-arc == 'true' }}
+      if: ${{ inputs.use-arc == 'true' && inputs.compiler != '' }}
       shell: bash
       run: |
         set -eux
 
-        BUILD_ENV="${{ inputs.build-environment }}"
-        CLANG_VERSION=$(echo "${BUILD_ENV}" | perl -n -e'/clang(\d+)/ && print $1')
-        GCC_VERSION=$(echo "${BUILD_ENV}" | perl -n -e'/gcc(\d+)/ && print $1')
+        COMPILER="${{ inputs.compiler }}"
+        CLANG_VERSION=$(echo "${COMPILER}" | perl -n -e'/^clang(\d+)$/ && print $1')
+        GCC_VERSION=$(echo "${COMPILER}" | perl -n -e'/^gcc(\d+)$/ && print $1')
 
         if [ -z "${CLANG_VERSION}" ] && [ -z "${GCC_VERSION}" ]; then
-          echo "No compiler specified in build environment, using base image defaults"
+          echo "ERROR: unrecognized compiler '${COMPILER}', expected gcc<N> or clang<N>"
+          exit 1
         elif [ -n "${CLANG_VERSION}" ]; then
           # On AlmaLinux 9, clang 18 is pre-installed from AppStream.
           # Older versions (e.g., clang 15) are available from EPEL.
@@ -198,18 +199,12 @@ runs:
         fi
 
     - name: Switch CUDA version
-      if: ${{ inputs.use-arc == 'true' }}
+      if: ${{ inputs.use-arc == 'true' && inputs.cuda-version != '' }}
       shell: bash
       run: |
         set -eux
 
-        BUILD_ENV="${{ inputs.build-environment }}"
-        CUDA_VERSION=$(echo "${BUILD_ENV}" | perl -n -e'/cuda(\d+\.\d+)/ && print $1')
-
-        if [ -z "${CUDA_VERSION}" ]; then
-          echo "No CUDA version specified in build environment, keeping default"
-          exit 0
-        fi
+        CUDA_VERSION="${{ inputs.cuda-version }}"
 
         # All CUDA versions are pre-installed in the base image under
         # /usr/local/cuda-{major.minor}. The default (/usr/local/cuda
