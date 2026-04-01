@@ -1,20 +1,40 @@
 #!/usr/bin/env python3
 
 import json
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
 SCRIPT = Path(__file__).resolve().parent / "map_ec2_to_arc.py"
 
 
-def run(matrix: str, prefix: str = "") -> subprocess.CompletedProcess:
+def run(
+    matrix: str, prefix: str = "", github_output: str | None = None
+) -> subprocess.CompletedProcess:
     cmd = [sys.executable, str(SCRIPT)]
     if prefix:
         cmd += ["--prefix", prefix]
     cmd.append(matrix)
-    return subprocess.run(cmd, capture_output=True, text=True)
+
+    env = os.environ.copy()
+    if github_output is not None:
+        env["GITHUB_OUTPUT"] = github_output
+    else:
+        env.pop("GITHUB_OUTPUT", None)
+
+    return subprocess.run(cmd, capture_output=True, text=True, env=env)
+
+
+def parse_output(stdout: str) -> dict:
+    """Extract the JSON matrix from the 'Setting test-matrix=...' line."""
+    prefix = "Setting test-matrix="
+    for line in stdout.splitlines():
+        if line.startswith(prefix):
+            return json.loads(line[len(prefix) :])
+    raise ValueError(f"no test-matrix output found in: {stdout}")
 
 
 def check(condition: bool, msg: str = "") -> None:
@@ -29,7 +49,7 @@ def test_basic_matrix():
     ]}"""
     result = run(matrix)
     check(result.returncode == 0, result.stderr)
-    output = json.loads(result.stdout)
+    output = parse_output(result.stdout)
     runners = [e["runner"] for e in output["include"]]
     check(runners == ["l-x86iavx512-16-128", "l-x86iavx512-8-64"])
 
@@ -42,7 +62,7 @@ def test_matrix_with_prefix():
     ]}"""
     result = run(matrix, prefix="mt-")
     check(result.returncode == 0, result.stderr)
-    output = json.loads(result.stdout)
+    output = parse_output(result.stdout)
     runners = [e["runner"] for e in output["include"]]
     check(
         runners
@@ -60,7 +80,7 @@ def test_matrix_without_prefix_when_none_present():
     ]}"""
     result = run(matrix)
     check(result.returncode == 0, result.stderr)
-    output = json.loads(result.stdout)
+    output = parse_output(result.stdout)
     check(output["include"][0]["runner"] == "l-x86aavx2-29-113-a10g")
 
 
@@ -80,7 +100,7 @@ def test_prefix_not_present_on_runner():
     ]}"""
     result = run(matrix, prefix="mt-")
     check(result.returncode == 0, result.stderr)
-    output = json.loads(result.stdout)
+    output = parse_output(result.stdout)
     check(output["include"][0]["runner"] == "mt-l-x86iavx512-16-128")
 
 
@@ -90,7 +110,7 @@ def test_preserves_non_runner_fields():
     ]}"""
     result = run(matrix)
     check(result.returncode == 0, result.stderr)
-    entry = json.loads(result.stdout)["include"][0]
+    entry = parse_output(result.stdout)["include"][0]
     check(entry["config"] == "default")
     check(entry["shard"] == 3)
     check(entry["num_shards"] == 7)
@@ -112,7 +132,7 @@ def test_mixed_runners():
     ]}"""
     result = run(matrix)
     check(result.returncode == 0, result.stderr)
-    output = json.loads(result.stdout)
+    output = parse_output(result.stdout)
     runners = [e["runner"] for e in output["include"]]
     check(
         runners
@@ -122,6 +142,26 @@ def test_mixed_runners():
             "l-arm64g2-6-32",
         ]
     )
+
+
+def test_github_output_file():
+    """When GITHUB_OUTPUT is set, the script writes test-matrix to that file."""
+    matrix = """{ include: [
+      { config: "default", shard: 1, num_shards: 1, runner: "linux.2xlarge" },
+    ]}"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+        tmp_path = f.name
+
+    try:
+        result = run(matrix, github_output=tmp_path)
+        check(result.returncode == 0, result.stderr)
+
+        contents = Path(tmp_path).read_text()
+        check(contents.startswith("test-matrix="), f"unexpected file contents: {contents}")
+        written = json.loads(contents[len("test-matrix=") :].strip())
+        check(written["include"][0]["runner"] == "l-x86iavx512-8-64")
+    finally:
+        os.unlink(tmp_path)
 
 
 if __name__ == "__main__":

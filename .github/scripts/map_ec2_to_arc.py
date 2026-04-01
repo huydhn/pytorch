@@ -12,6 +12,7 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -46,6 +47,14 @@ def load_mapping(arc_yaml: Path) -> dict[str, str]:
     return data["runner_mapping"]
 
 
+def set_output(name: str, val: str) -> None:
+    print(f"Setting {name}={val}")
+    github_output = os.getenv("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a") as f:
+            print(f"{name}={val}", file=f)
+
+
 def main() -> None:
     args = parse_args()
     arc_yaml = Path(__file__).resolve().parent.parent / "arc.yaml"
@@ -66,7 +75,7 @@ def main() -> None:
             sys.exit(1)
         entry["runner"] = args.prefix + mapping[clean]
 
-    print(json.dumps(matrix))
+    set_output("test-matrix", json.dumps(matrix))
 
 
 if __name__ == "__main__":
