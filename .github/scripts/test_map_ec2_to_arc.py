@@ -117,11 +117,17 @@ def test_preserves_non_runner_fields():
     check(entry["runner"] == "l-x86iavx512-2-4")
 
 
-def test_empty_include_fails():
+def test_empty_include_passes_through():
     matrix = """{ include: [] }"""
     result = run(matrix)
-    check(result.returncode == 1)
-    check("no 'include' entries" in result.stderr)
+    check(result.returncode == 0, result.stderr)
+    output = parse_output(result.stdout)
+    check(output == {"include": []}, f"expected empty include, got {output}")
+
+
+def test_empty_string_passes_through():
+    result = run("")
+    check(result.returncode == 0, result.stderr)
 
 
 def test_mixed_runners():
@@ -157,7 +163,9 @@ def test_github_output_file():
         check(result.returncode == 0, result.stderr)
 
         contents = Path(tmp_path).read_text()
-        check(contents.startswith("test-matrix="), f"unexpected file contents: {contents}")
+        check(
+            contents.startswith("test-matrix="), f"unexpected file contents: {contents}"
+        )
         written = json.loads(contents[len("test-matrix=") :].strip())
         check(written["include"][0]["runner"] == "l-x86iavx512-8-64")
     finally:

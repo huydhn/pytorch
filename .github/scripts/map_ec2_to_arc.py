@@ -61,10 +61,14 @@ def main() -> None:
     mapping = load_mapping(arc_yaml)
 
     matrix = yaml.safe_load(args.matrix)
+    if not matrix:
+        set_output("test-matrix", args.matrix)
+        return
+
     entries = matrix.get("include", [])
     if not entries:
-        print("error: matrix has no 'include' entries", file=sys.stderr)
-        sys.exit(1)
+        set_output("test-matrix", json.dumps(matrix))
+        return
 
     for entry in entries:
         if "runner" not in entry:
