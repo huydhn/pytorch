@@ -116,9 +116,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(inputs.test-matrix) }}
       fail-fast: false
-    environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'scribe-protected' || startsWith(github.ref, 'refs/heads/release/') && 'scribe-protected' || contains(github.event.pull_request.labels.*.name, 'ci-scribe') && 'scribe-pr' || '' }}
-      deployment: false
+    environment: ${{ github.ref == 'refs/heads/main' && 'scribe-protected' || startsWith(github.ref, 'refs/heads/release/') && 'scribe-protected' || contains(github.event.pull_request.labels.*.name, 'ci-scribe') && 'scribe-pr' || '' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: ${{ matrix.mem_leak_check == 'mem_leak_check' && 600 || inputs.timeout-minutes }}
     permissions:
@@ -590,7 +588,7 @@ jobs:
       matrix: ${{ fromJSON(inputs.test-matrix) }}
       fail-fast: false
     environment:
-      name: {{ github.ref == 'refs/heads/main' && 'scribe-protected' || startsWith(github.ref, 'refs/heads/release/') && 'scribe-protected' || contains(github.event.pull_request.labels.*.name, 'ci-scribe') && 'scribe-pr' || 'CI' }}
+      name: ${{ github.ref == 'refs/heads/main' && 'scribe-protected' || startsWith(github.ref, 'refs/heads/release/') && 'scribe-protected' || contains(github.event.pull_request.labels.*.name, 'ci-scribe') && 'scribe-pr' || 'CI' }}
       deployment: false
     runs-on: ${{ matrix.runner }}
     container:
