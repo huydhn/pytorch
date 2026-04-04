@@ -481,6 +481,19 @@ jobs:
       test-matrix: ${{ steps.map-runners.outputs.test-matrix }}
       build-environment: ${{ inputs.build-environment }}
     steps:
+      - name: Can I request an OIDC token?
+        run: |
+          test -n "$ACTIONS_ID_TOKEN_REQUEST_URL" && echo "OIDC URL present" || (echo "NO OIDC URL"; exit 1)
+          test -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" && echo "OIDC request token present" || (echo "NO OIDC request token"; exit 1)
+
+      - name: Dump OIDC claims (safe)
+        shell: bash
+        run: |
+          resp="$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")"
+          token="$(echo "$resp" | jq -r .value)"
+          echo "$token" | cut -d. -f2 | base64 -d 2>/dev/null | jq .
+
       # DEBUG
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7
