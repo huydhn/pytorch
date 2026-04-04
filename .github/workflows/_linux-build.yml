@@ -474,7 +474,9 @@ jobs:
     runs-on: ${{ inputs.runner_prefix }}${{ startsWith(inputs.runner, 'l-') && inputs.runner || 'l-x86iavx512-8-64' }}
     container:
       image: ghcr.io/pytorch/${{ inputs.docker-image-name }}
-    environment: CI
+    environment:
+      name: CI
+      deployment: false
     timeout-minutes: 480
     outputs:
       docker-image: ghcr.io/pytorch/${{ inputs.docker-image-name }}
