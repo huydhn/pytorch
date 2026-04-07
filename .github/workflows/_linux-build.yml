@@ -479,7 +479,6 @@ jobs:
       docker-image: ghcr.io/pytorch/${{ inputs.docker-image-name }}
       test-matrix: ${{ steps.map-runners.outputs.test-matrix }}
       build-environment: ${{ inputs.build-environment }}
-      use-gha: ${{ steps.aws-creds.outcome != 'success' }}
     steps:
       - name: Setup Linux
         id: setup-linux
