@@ -584,9 +584,6 @@ jobs:
         if: inputs.build-generates-artifacts && (steps.build.outcome != 'skipped' || steps.use-old-whl.outputs.reuse == 'true')
         with:
           name: ${{ inputs.build-environment }}
-          retention-days: 14
-          if-no-files-found: error
-          path: artifacts.zip
           s3-bucket: ${{ inputs.s3-bucket }}
 
       - name: Upload sccache stats
