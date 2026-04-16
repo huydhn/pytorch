@@ -910,10 +910,6 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
     def is_safe_to_use_borrow_arrayref_tensor_as_tensor(self):
         return not self.allow_stack_allocation and not self.stack_allocated_buffers
 
-    def _borrow_tensor_input_for_assign(self, tensor_expr: str) -> str:
-        # Subgraphs are inlined, so any borrowed handle stays within the wrapper scope.
-        return f"borrow_arrayref_tensor_as_tensor({tensor_expr})"
-
     def codegen_subgraph_prefix(self, subgraph, outer_inputs, outer_outputs):
         assert len(subgraph.graph.graph_inputs) == len(outer_inputs)
 
@@ -923,11 +919,20 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
             if not isinstance(inner_input_val, ir.TensorBox):
                 continue
 
+            # Wrap with a generic lambda so if constexpr can discard the
+            # ill-formed branch (if constexpr only discards in dependent
+            # contexts, i.e. templates / generic lambdas).
             self.writeline(f"AtenTensorHandle {inner_input}_handle;")
             self.writeline(
-                "AOTI_TORCH_ERROR_CODE_CHECK("
-                f"aoti_torch_assign_tensors_out({self._borrow_tensor_input_for_assign(outer_input)}, "
-                f"&{inner_input}_handle));"
+                f"[&](auto&& _t) {{ "
+                f"if constexpr (::torch::aot_inductor::is_arrayref_tensor_type_v"
+                f"<std::decay_t<decltype(_t)>>) {{ "
+                f"AOTI_TORCH_ERROR_CODE_CHECK(aoti_torch_assign_tensors_out("
+                f"borrow_arrayref_tensor_as_tensor(_t), &{inner_input}_handle)); "
+                f"}} else {{ "
+                f"AOTI_TORCH_ERROR_CODE_CHECK(aoti_torch_assign_tensors_out("
+                f"_t, &{inner_input}_handle)); "
+                f"}} }}({outer_input});"
             )
             self.writeline(f"RAIIAtenTensorHandle {inner_input}({inner_input}_handle);")
 
@@ -956,7 +961,7 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
             self.writeline(f"AtenTensorHandle {out_name}_handle;")
             self.writeline(
                 "AOTI_TORCH_ERROR_CODE_CHECK("
-                f"aoti_torch_assign_tensors_out({self._borrow_tensor_input_for_assign(inp)}, "
+                f"aoti_torch_assign_tensors_out(borrow_arrayref_tensor_as_tensor({inp}), "
                 f"&{out_name}_handle));"
             )
             self.writeline(f"RAIIAtenTensorHandle {out_name}({out_name}_handle);")

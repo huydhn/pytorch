@@ -388,7 +388,7 @@ else
 
     BUILD_LIBTORCH_PY=$PWD/tools/build_libtorch.py
     # Build outside the source tree so the artifacts don't interfere with
-    # the workspace.  /tmp is writable on both EC2 and OSDC runners.
+    # the workspace. /tmp is writable on both EC2 and OSDC runners.
     mkdir -p /tmp/cpp-build/caffe2
     pushd /tmp/cpp-build/caffe2
     WERROR=1 VERBOSE=1 DEBUG=1 python "$BUILD_LIBTORCH_PY"
