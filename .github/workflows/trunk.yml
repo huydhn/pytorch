@@ -234,6 +234,8 @@ jobs:
       disable-monitor: false
     secrets: inherit
 
+  # NB: Windows runners are not available in OSDC, so we run this on Meta account
+  # for now until we get OSDC deployed to LF account
   win-vs2022-cpu-py3-build:
     if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' win-vs2022-cpu-py3 ') }}
     name: win-vs2022-cpu-py3
@@ -244,14 +246,14 @@ jobs:
     with:
       build-environment: win-vs2022-cpu-py3
       cuda-version: cpu
-      runner: "${{ needs.get-label-type.outputs.label-type }}windows.4xlarge.nonephemeral"
+      runner: windows.4xlarge.nonephemeral
       test-matrix: |
         { include: [
-          { config: "default", shard: 1, num_shards: 4, runner: "${{ needs.get-label-type.outputs.label-type }}windows.4xlarge.nonephemeral" },
-          { config: "default", shard: 2, num_shards: 4, runner: "${{ needs.get-label-type.outputs.label-type }}windows.4xlarge.nonephemeral" },
-          { config: "default", shard: 3, num_shards: 4, runner: "${{ needs.get-label-type.outputs.label-type }}windows.4xlarge.nonephemeral" },
-          { config: "default", shard: 4, num_shards: 4, runner: "${{ needs.get-label-type.outputs.label-type }}windows.4xlarge.nonephemeral" },
-          { config: "openreg", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}windows.4xlarge.nonephemeral" },
+          { config: "default", shard: 1, num_shards: 4, runner: "windows.4xlarge.nonephemeral" },
+          { config: "default", shard: 2, num_shards: 4, runner: "windows.4xlarge.nonephemeral" },
+          { config: "default", shard: 3, num_shards: 4, runner: "windows.4xlarge.nonephemeral" },
+          { config: "default", shard: 4, num_shards: 4, runner: "windows.4xlarge.nonephemeral" },
+          { config: "openreg", shard: 1, num_shards: 1, runner: "windows.4xlarge.nonephemeral" },
         ]}
     secrets: inherit
 
@@ -270,7 +272,8 @@ jobs:
       disable-monitor: false
     secrets: inherit
 
-
+  # NB: Windows runners are not available in OSDC, so we run this on Meta account
+  # for now until we get OSDC deployed to LF account
   win-vs2022-cuda13_0-py3-build:
     if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' win-vs2022-cuda13.0-py3 ') || contains(needs.job-filter.outputs.jobs, ' cross-compile-linux-test-cuda13 ') }}
     name: win-vs2022-cuda13.0-py3
@@ -281,7 +284,7 @@ jobs:
     with:
       build-environment: win-vs2022-cuda13.0-py3
       cuda-version: "13.0"
-      runner: "${{ needs.get-label-type.outputs.label-type }}windows.4xlarge.nonephemeral"
+      runner: windows.4xlarge.nonephemeral
     secrets: inherit
 
   linux-jammy-rocm-py3_10-build:
