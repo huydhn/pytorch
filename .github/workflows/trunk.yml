@@ -107,7 +107,7 @@ jobs:
           { config: "distributed", shard: 1, num_shards: 3, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g4dn.12xlarge.nvidia.gpu" },
           { config: "distributed", shard: 2, num_shards: 3, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g4dn.12xlarge.nvidia.gpu" },
           { config: "distributed", shard: 3, num_shards: 3, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g4dn.12xlarge.nvidia.gpu" },
-          { config: "libtorch_agnostic_targetting", shard: 1, num_shards: 1, runner: "linux.g4dn.metal.nvidia.gpu" },
+          { config: "libtorch_agnostic_targetting", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g4dn.metal.nvidia.gpu" },
         ]}
       use-arc: ${{ needs.get-label-type.outputs.use-arc == 'true' }}
       python-version: "3.10"
@@ -142,7 +142,9 @@ jobs:
           { config: "distributed", shard: 1, num_shards: 3, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g4dn.12xlarge.nvidia.gpu" },
           { config: "distributed", shard: 2, num_shards: 3, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g4dn.12xlarge.nvidia.gpu" },
           { config: "distributed", shard: 3, num_shards: 3, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g4dn.12xlarge.nvidia.gpu" },
-          { config: "pr_time_benchmarks", shard: 1, num_shards: 1, runner: "linux.g4dn.metal.nvidia.gpu" },
+          { config: "pr_time_benchmarks", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g4dn.metal.nvidia.gpu" },
+          # Test cross-compiled models with Windows libs extracted from wheel (CUDA 13.0)
+          { config: "aoti_cross_compile_for_windows", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g6.4xlarge.experimental.nvidia.gpu", win_torch_wheel_artifact: "win-vs2022-cuda13.0-py3" },
         ]}
       use-arc: ${{ needs.get-label-type.outputs.use-arc == 'true' }}
       python-version: "3.10"
@@ -156,6 +158,7 @@ jobs:
     uses: ./.github/workflows/_linux-test.yml
     needs:
       - linux-jammy-cuda13_0-py3_10-gcc11-build
+      - win-vs2022-cuda13_0-py3-build
       - target-determination
       - job-filter
       - get-label-type
@@ -343,31 +346,6 @@ jobs:
       cuda-arch-list: '8.0'
       use-arc: ${{ needs.get-label-type.outputs.use-arc == 'true' }}
       python-version: "3.12"
-      compiler: gcc11
-      cuda-version: "13.0"
-    secrets: inherit
-
-
-  # Test cross-compiled models with Windows libs extracted from wheel (CUDA 13.0)
-  cross-compile-linux-test-cuda13:
-    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' cross-compile-linux-test-cuda13 ') }}
-    name: cross-compile-linux-test-cuda13
-    uses: ./.github/workflows/_linux-test.yml
-    needs:
-      - linux-jammy-cuda13_0-py3_10-gcc11-build
-      - get-label-type
-      - win-vs2022-cuda13_0-py3-build
-      - job-filter
-    with:
-      build-environment: ${{ needs.linux-jammy-cuda13_0-py3_10-gcc11-build.outputs.build-environment }}
-      docker-image: ${{ needs.linux-jammy-cuda13_0-py3_10-gcc11-build.outputs.docker-image }}
-      test-matrix: |
-        { include: [
-          { config: "aoti_cross_compile_for_windows", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}linux.g6.4xlarge.experimental.nvidia.gpu", win_torch_wheel_artifact: "win-vs2022-cuda13.0-py3" },
-        ]}
-      tests-to-include: ${{ github.event.inputs.tests-to-include || '' }}
-      use-arc: ${{ needs.get-label-type.outputs.use-arc == 'true' }}
-      python-version: "3.10"
       compiler: gcc11
       cuda-version: "13.0"
     secrets: inherit
