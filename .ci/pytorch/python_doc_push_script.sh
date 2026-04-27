@@ -50,6 +50,7 @@ echo "install_path: $install_path  version: $version"
 
 build_docs () {
   set +e
+  sleep 7200
   # Don't pipe through tee: sphinx -j auto forks workers that inherit
   # the pipe fd and hold it open after sphinx exits, causing tee to
   # block forever. Write to a file and tail with --pid so it exits

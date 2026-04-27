@@ -289,7 +289,8 @@ jobs:
             timeout-minutes: 360
           - docs_type: python
             runner: ${{ inputs.runner_prefix }}l-x86iavx512-16-128
-            timeout-minutes: 60
+            # DEBUG
+            timeout-minutes: 360
     name: build-docs-${{ matrix.docs_type }}-${{ inputs.push }}
     steps:
       - name: Setup Linux
