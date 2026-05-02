@@ -80,12 +80,6 @@ install_ubuntu() {
   # see: https://github.com/pytorch/pytorch/issues/65931
   apt-get install -y libgnutls30
 
-  # Hard-fail if git is missing or older than 2.36 (the minimum for
-  # `git submodule update --filter=tree:0`, which actions/checkout invokes).
-  if ! command -v git >/dev/null 2>&1; then
-    echo "ERROR: git was not installed" >&2
-    exit 1
-  fi
   GIT_VERSION=$(git --version | awk '{print $3}')
   GIT_MAJOR=${GIT_VERSION%%.*}
   GIT_MINOR=${GIT_VERSION#*.}; GIT_MINOR=${GIT_MINOR%%.*}
