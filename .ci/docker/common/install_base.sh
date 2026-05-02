@@ -22,22 +22,10 @@ install_ubuntu() {
 
   # Install common dependencies
   apt-get update
-  apt-get install -y --no-install-recommends ca-certificates curl
-  # Install git from microsoft/git prebuilt .deb. We previously used the
-  # git-core PPA via add-apt-repository, but Launchpad's API endpoint has been
-  # unreliable and the distro's stock git (2.34 on jammy) is too old for
-  # `git submodule update --filter=tree:0` that actions/checkout invokes.
-  MS_GIT_VERSION="2.53.0.vfs.0.7"
-  case "$(dpkg --print-architecture)" in
-    amd64) MS_GIT_ARCH="amd64" ;;
-    arm64) MS_GIT_ARCH="arm64" ;;
-    *) echo "ERROR: unsupported arch $(dpkg --print-architecture) for microsoft/git" >&2; exit 1 ;;
-  esac
-  MS_GIT_DEB="microsoft-git_${MS_GIT_VERSION}_${MS_GIT_ARCH}.deb"
-  curl -fsSL -o "/tmp/${MS_GIT_DEB}" \
-    "https://github.com/microsoft/git/releases/download/v${MS_GIT_VERSION}/${MS_GIT_DEB}"
-  apt-get install -y --no-install-recommends "/tmp/${MS_GIT_DEB}"
-  rm -f "/tmp/${MS_GIT_DEB}"
+# Install prerequisites for add-apt-repository (needs gpg-agent for PPA key import)
+  apt-get install -y --no-install-recommends software-properties-common gpg-agent
+  # Add git-core PPA for a newer version of git
+  add-apt-repository ppa:git-core/ppa -y
   apt-get update
   # TODO: Some of these may not be necessary
   deploy_deps="libffi-dev libbz2-dev libreadline-dev libncurses5-dev libncursesw5-dev libgdbm-dev libsqlite3-dev uuid-dev tk-dev"
@@ -52,6 +40,7 @@ install_ubuntu() {
     build-essential \
     ca-certificates \
     curl \
+    git \
     libatlas-base-dev \
     libc6-dbg \
     libyaml-dev \
