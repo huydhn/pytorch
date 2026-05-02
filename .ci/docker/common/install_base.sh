@@ -22,7 +22,7 @@ install_ubuntu() {
 
   # Install common dependencies
   apt-get update
-# Install prerequisites for add-apt-repository (needs gpg-agent for PPA key import)
+  # Install prerequisites for add-apt-repository (needs gpg-agent for PPA key import)
   apt-get install -y --no-install-recommends software-properties-common gpg-agent
   # Add git-core PPA for a newer version of git
   add-apt-repository ppa:git-core/ppa -y
