@@ -1,4 +1,4 @@
-# Docker images for GitHub CI and CD
+# Docker images for GitHub CI and CD (TESTING)
 
 This directory contains everything needed to build the Docker images
 that are used in our CI.
