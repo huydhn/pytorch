@@ -37,6 +37,13 @@ concurrency:
 
 jobs:
   mock-build:
+    # The GHCR_PAT used by the "Login to GHCR" step is a secret of the
+    # docker-build environment, so the job must declare it. NOTE: that
+    # environment has a custom deployment-branch policy (main, nightly,
+    # release/2.*, v2.* tags) -- the secret is only injected when the run is on
+    # one of those branches, and environment secrets are never available to
+    # pull_request runs from a fork.
+    environment: docker-build
     runs-on:
       group: default
       labels: mt-l-x86iavx512-2-4
