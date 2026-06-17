@@ -1,0 +1,86 @@
+name: OSDC BuildKit Mock Build
+
+# Smoke test: build a tiny mock Docker image on a regular OSDC (multi-tenant)
+# runner via the cluster's remote BuildKit, then discard the output
+# (push=false). This validates the runner -> BuildKit path end to end; it does
+# NOT publish an image.
+#
+# Runner selection:
+#   - Uses the regular OSDC runner group (mt-l- prefix), NOT the release group
+#     (mt-rel-). Any regular OSDC runner can reach BuildKit because the buildkit
+#     NetworkPolicy allows ingress from the whole arc-runners namespace.
+#   - mt-l-x86iavx512-2-4 is the smallest x86 OSDC runner (2 vCPU / 4 GiB) and
+#     is already registered in .github/actionlint.yaml.
+#
+# BuildKit is a *remote* builder, so this x86 runner connects to the amd64
+# BuildKit service (buildkitd-amd64.buildkit) over the in-cluster network.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/osdc-buildkit-mock-build.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  mock-build:
+    runs-on: mt-l-x86iavx512-2-4
+    container:
+      image: ghcr.io/actions/actions-runner:latest
+    timeout-minutes: 15
+    steps:
+      - name: Install buildctl
+        run: |
+          set -eu
+          BUILDKIT_VERSION="v0.29.0"
+          mkdir -p "$HOME/.local/bin"
+          curl -sSL "https://github.com/moby/buildkit/releases/download/${BUILDKIT_VERSION}/buildkit-${BUILDKIT_VERSION}.linux-amd64.tar.gz" \
+            | tar xz --strip-components=1 -C "$HOME/.local/bin" bin/buildctl
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/buildctl" --version
+
+      - name: Generate mock Docker context
+        run: |
+          set -eu
+          mkdir -p mock-image
+          cat > mock-image/Dockerfile <<'EOF'
+          FROM alpine:3.21
+          RUN echo "OSDC BuildKit mock build OK" > /mock.txt
+          CMD ["cat", "/mock.txt"]
+          EOF
+
+      - name: Build mock image via OSDC BuildKit (push=false)
+        run: |
+          set -eu
+          ENDPOINT="tcp://buildkitd-amd64.buildkit:1234"
+          echo "Connecting to remote BuildKit: $ENDPOINT"
+          # The buildkit client dials with gRPC's ~20s connect timeout, so a
+          # cold / busy pool can drop the first dials. Retry to outlast a cold
+          # scale-up: ~20 x (≈5s fail + 15s) ≈ 7 min.
+          for attempt in $(seq 1 20); do
+            if buildctl --addr "$ENDPOINT" build \
+                --frontend dockerfile.v0 \
+                --local context=mock-image \
+                --local dockerfile=mock-image \
+                --output type=image,name=osdc/mock-build:${{ github.sha }},push=false; then
+              echo "PASS: mock image built on attempt ${attempt} ($ENDPOINT)"
+              exit 0
+            fi
+            echo "attempt ${attempt}/20 failed (BuildKit cold/queued); retrying in 15s..."
+            sleep 15
+          done
+          echo "FAIL: mock build failed after retries" >&2
+          exit 1
+
+      - name: Verify BuildKit endpoint
+        run: |
+          set -eu
+          ENDPOINT="tcp://buildkitd-amd64.buildkit:1234"
+          buildctl --addr "$ENDPOINT" debug info || echo "WARN: debug info not available"
+          echo "PASS: OSDC BuildKit endpoint responsive"
