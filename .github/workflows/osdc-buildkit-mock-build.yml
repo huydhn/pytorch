@@ -44,6 +44,20 @@ jobs:
       image: ghcr.io/actions/actions-runner:latest
     timeout-minutes: 15
     steps:
+      # Diagnostic: does ghcr.io egress work from a regular mt-l-* (default
+      # group) runner? The cache-enforcer DaemonSet is expected to block ghcr.io
+      # egress on this pool (release runners are exempt via
+      # osdc.io/runner-class=release), so this step likely fails with a network
+      # error -- that outcome IS the test result. GHCR_PAT is only available on
+      # workflow_dispatch from the base repo, not on fork PRs, so run this via
+      # "Run workflow" to get a meaningful (auth vs. egress) signal.
+      - name: Login to GHCR (egress test)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: pytorch
+          password: ${{ secrets.GHCR_PAT }}
+
       - name: Install buildctl
         run: |
           set -eu
