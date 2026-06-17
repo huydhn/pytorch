@@ -6,11 +6,18 @@ name: OSDC BuildKit Mock Build
 # NOT publish an image.
 #
 # Runner selection:
-#   - Uses the regular OSDC runner group (mt-l- prefix), NOT the release group
-#     (mt-rel-). Any regular OSDC runner can reach BuildKit because the buildkit
+#   - The mt-l-x86iavx512-2-4 label is registered on MULTIPLE OSDC prod clusters
+#     and not all of them deploy BuildKit (e.g. the meta-prod-aws-ue1 cluster
+#     has no buildkit namespace). A label-only `runs-on` therefore schedules
+#     non-deterministically and can land on a cluster where
+#     buildkitd-amd64.buildkit does not resolve ("no such host").
+#   - So we pin the runner GROUP to `default`, which is the arc-cbr-production
+#     cluster — a regular OSDC cluster (mt-l- prefix, NOT the mt-rel- release
+#     group) that DOES deploy BuildKit. mt-l-x86iavx512-2-4 is the smallest x86
+#     OSDC runner (2 vCPU / 4 GiB) and is already registered in
+#     .github/actionlint.yaml.
+#   - Within that cluster, BuildKit is reachable because the buildkit
 #     NetworkPolicy allows ingress from the whole arc-runners namespace.
-#   - mt-l-x86iavx512-2-4 is the smallest x86 OSDC runner (2 vCPU / 4 GiB) and
-#     is already registered in .github/actionlint.yaml.
 #
 # BuildKit is a *remote* builder, so this x86 runner connects to the amd64
 # BuildKit service (buildkitd-amd64.buildkit) over the in-cluster network.
@@ -30,7 +37,9 @@ concurrency:
 
 jobs:
   mock-build:
-    runs-on: mt-l-x86iavx512-2-4
+    runs-on:
+      group: default
+      labels: mt-l-x86iavx512-2-4
     container:
       image: ghcr.io/actions/actions-runner:latest
     timeout-minutes: 15
