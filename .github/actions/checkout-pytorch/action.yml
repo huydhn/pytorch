@@ -46,6 +46,7 @@ runs:
       env:
         NO_SUDO: ${{ inputs.no-sudo }}
       run: |
+        # Use all available CPUs for fetching
         cd "${GITHUB_WORKSPACE}"
         git config --global fetch.parallel 0
         git config --global submodule.fetchJobs 0
