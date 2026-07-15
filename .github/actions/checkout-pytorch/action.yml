@@ -46,11 +46,9 @@ runs:
       env:
         NO_SUDO: ${{ inputs.no-sudo }}
       run: |
-        # Cap concurrency: unbounded (0 == per-core) fetch bursts to github.com
-        # get throttled into transient HTTP 408/429, especially with submodules.
         cd "${GITHUB_WORKSPACE}"
-        git config --global fetch.parallel 8
-        git config --global submodule.fetchJobs 8
+        git config --global fetch.parallel 0
+        git config --global submodule.fetchJobs 0
 
         # Retry throttled fetches instead of failing hard. Native in git >= 2.54
         # (retries HTTP 429, honoring Retry-After); maxRetries defaults to 0 so
