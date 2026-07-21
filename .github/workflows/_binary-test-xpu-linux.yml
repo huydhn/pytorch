@@ -30,6 +30,14 @@ on:
       DOCKER_IMAGE_TAG_PREFIX:
         required: true
         type: string
+      DOCKER_IMAGE_REGISTRY_HOST:
+        required: false
+        default: ""
+        type: string
+        description: |
+          Registry host prefix (with trailing slash) prepended to the
+          pytorch/<image> path. Empty (default) means Docker Hub, preserving
+          the historical nightly/release behavior.
       DESIRED_PYTHON:
         required: false
         type: string
@@ -55,7 +63,7 @@ jobs:
     runs-on: ${{ inputs.runs_on }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     container:
-      image: pytorch/${{ inputs.DOCKER_IMAGE }}:${{ inputs.DOCKER_IMAGE_TAG_PREFIX }}
+      image: ${{ inputs.DOCKER_IMAGE_REGISTRY_HOST }}pytorch/${{ inputs.DOCKER_IMAGE }}:${{ inputs.DOCKER_IMAGE_TAG_PREFIX }}
       options: --device=/dev/dri --group-add video --group-add render -e ZE_AFFINITY_MASK
     env:
       PYTORCH_ROOT: ${{ github.workspace }}
